@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Caeser!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="./images/icon.ico" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div id="layout" class="background">
+      <div id="info" class="grid">
+        <div id="infoArea" class="message"></div>
+        <div id="messageArea" class="message"></div>
+        <div class="container col">
+          <p class="message" style="margin-bottom: 20px">Pieces:</p>
+          <div id="piecesArea" class="container"></div>
+          <p id="inBag"></p>
+        </div>
+      </div>
+      <div id="board"></div>
+    </div>
+
+    <script src="./js/data.js"></script>
+    <script src="./js/init.js"></script>
+    <script src="./js/model.js"></script>
+    <script src="./js/view.js"></script>
+    <script src="./js/controller.js"></script>
+  </body>
+</html>
