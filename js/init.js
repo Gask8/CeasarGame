@@ -1,17 +1,24 @@
 window.onload = init;
 
 // Set the board boundaries
-const board = document.getElementById("board");
-const rect = board.getBoundingClientRect();
-const startX = rect.left + window.scrollX;
-const startY = rect.top + window.scrollY;
-const endX = startX + rect.width;
-const endY = startY + rect.height;
+let startX, startY, endX, endY;
 
 function init() {
+  calculateBoardBoundaries();
   controller.startGame();
   // printMousePoint();
   view.displayPlayerPieces(1);
+}
+
+// Recalculate boundaries on window resize
+window.addEventListener("resize", calculateBoardBoundaries);
+function calculateBoardBoundaries() {
+  const board = document.getElementById("board");
+  const rect = board.getBoundingClientRect();
+  startX = rect.left + window.scrollX;
+  startY = rect.top + window.scrollY;
+  endX = startX + rect.width;
+  endY = startY + rect.height;
 }
 
 function printMousePosition() {

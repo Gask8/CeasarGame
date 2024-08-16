@@ -1,4 +1,7 @@
+@import url("https://fonts.googleapis.com/css2?family=Luxurious+Roman&display=swap");
+
 * {
+  font-family: "Luxurious Roman", serif;
   padding: 0;
   margin: 0;
   box-sizing: border-box;
@@ -20,7 +23,40 @@ html {
   padding: 0 5%;
 }
 
-/* ============Components=============== */
+.background::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.background > * {
+  position: relative;
+  z-index: 2; /* Ensure the content is above the overlay */
+}
+
+/* ============Scrollbar=============== */
+::-webkit-scrollbar {
+  height: 12px;
+  width: 12px;
+  background: #fff;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ad977d;
+  -webkit-border-radius: 2px;
+  -webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
+}
+
+::-webkit-scrollbar-corner {
+  background: #000;
+}
+
+/* ============General Components=============== */
 
 .container {
   display: flex;
@@ -31,29 +67,72 @@ html {
 .col {
   flex-direction: column;
 }
+
 .hide {
   display: none;
 }
+
 .grid {
   display: grid;
-  grid-template-rows: repeat(3, 1fr);
+  grid-template-rows: 33% 33% 33%;
   column-gap: 50px;
   justify-items: center;
   align-items: center;
-  padding: 10px;
 }
+
+/* ============Layout=============== */
+
+#layout {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+#info {
+  background-image: url("./images/info5.png");
+  background-size: 100% 100%;
+  width: 30%;
+  height: 700px;
+  /* background: #00000059; */
+  /* border: 1px solid black; */
+  border-radius: 10px;
+  padding: 8% 5%;
+}
+
+#seccondaryLayout {
+  width: 30%;
+  height: 700px;
+}
+
+#gameLogArea {
+  width: 100%;
+  height: 200px;
+  background: #00000059;
+  border-radius: 5%;
+  border: 1px solid black;
+  padding: 5%;
+}
+
+#gameLog {
+  width: 100%;
+  height: 100px;
+  scroll-behavior: smooth;
+  overflow-y: scroll;
+  color: #f4f8ff;
+  font-family: "Luxurious Roman", serif;
+}
+
+/* ============Displays=============== */
 
 .message {
   width: 100%;
   text-align: center;
   margin-top: 5px;
   color: #f4f8ff;
-  font-family: "Roboto", sans-serif;
-  font-size: 25px;
-}
-
-.infoArea {
-  align-self: flex-start;
+  font-family: "Luxurious Roman", serif;
+  font-size: 22px;
 }
 
 #inBag {
@@ -78,16 +157,28 @@ html {
   display: grid;
 }
 
-#info {
-  width: 30%;
-  height: 700px;
-  background: #00000059;
-  border: 1px solid black;
-  border-radius: 10px;
-  padding: 10px;
+/* ============Borad Tokens=============== */
+.p-1 {
+  background-color: #e32f2f;
 }
 
-/* ============Borad Tokens=============== */
+.p-2 {
+  background-color: #2776e7;
+}
+
+.controlMarksCounter {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid black;
+  border-radius: 50%;
+  pointer-events: none;
+  background-size: 75%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url("./images/banner.png");
+}
+
 .bonusToken {
   position: absolute;
   width: 26px;
@@ -127,10 +218,38 @@ html {
 
 .influenceToken p:last-child {
   transform: rotate(180deg);
+  border-bottom: 1px solid black;
 }
 
-.p-1 {
-  background-color: #e32f2f;
+.controlToken {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 2px solid black;
+  border-radius: 50%;
+  pointer-events: none;
+  background-size: 75%;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url("./images/banner.png");
+}
+
+.senateTokens {
+  position: absolute;
+  width: 31px;
+  height: 31px;
+  border: 2px solid black;
+  border-radius: 50%;
+  pointer-events: none;
+  background-size: 70%;
+  transform: rotate(90deg);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-image: url("./images/senate.png");
+}
+
+.senateTokens.p-2 {
+  transform: rotate(270deg);
 }
 
 .red-dot {
@@ -142,7 +261,7 @@ html {
   pointer-events: none; /* Prevent the dot from blocking future clicks */
 }
 
-/* ============Others=============== */
+/* ============Player Pieces=============== */
 
 .playerPieces {
   width: 70px;

@@ -1,11 +1,7 @@
-const bonusToken = fillArrayWithConditionsNumbers(17, [
-  [1, 4],
-  [2, 4],
-  [3, 4],
-  [4, 5],
-]);
+const bonusToken = makeBonusTokenArray();
 
 const model = {
+  // ==============Variables================
   states: locations
     .filter((l, index) => index < 18)
     .map((loc, index) => {
@@ -29,32 +25,46 @@ const model = {
     }),
 
   player1: {
+    name: "Player 1",
     pieces: gamePieces.slice(),
     piecesAtHand: [],
-    bonusToken: [],
+    controlMarks: 12,
+    senateBonus: 0,
+  },
+  player2: {
+    name: "Auto Poompei",
+    pieces: gamePieces.slice(),
+    piecesAtHand: [],
+    senateBonus: 0,
   },
 
-  // ==============Game================
+  // ==============Game Actions================
+  setInfluenceInState: function (
+    player,
+    numbers,
+    connections,
+    direction,
+    callback
+  ) {
+    let d = [0, 1];
 
-  setInfluenceInState: function (player, numbers, connections, directions) {
-    let d0 = 0;
-    let d1 = 1;
-
-    if (!directions) {
-      d0 = 1;
-      d1 = 0;
+    if (!direction) {
+      d = [1, 0];
     }
 
-    model.states[connections[d0] - 1].influence[
-      model.states[connections[d0] - 1].connections.findIndex(
-        (e) => e === model.states[connections[d1] - 1].id
-      )
-    ] = numbers[d0] * (-1) ** (player - 1);
-    model.states[connections[d1] - 1].influence[
-      model.states[connections[d1] - 1].connections.findIndex(
-        (e) => e === model.states[connections[d0] - 1].id
-      )
-    ] = numbers[d1] * (-1) ** (player - 1);
+    d.forEach((v, i) => {
+      const index = connections[v] - 1;
+      const otherIndex = v === 0 ? connections[1] - 1 : connections[0] - 1;
+      model.states[index].influence[
+        model.states[index].connections.findIndex(
+          (e) => e === model.states[otherIndex].id
+        )
+      ] = numbers[i] * (-1) ** (player - 1);
+      //Check if the state is closed and Act accordingly
+      if (model.checkIfStateIsClosed(index)) {
+        callback(player, index);
+      }
+    });
   },
 
   // ==============Pieces================
@@ -75,40 +85,34 @@ const model = {
     );
     model[`player${player}`].piecesAtHand.splice(removePiece, 1);
   },
+
+  // ==============Game Processing================
+  checkStateInfluenceSum: function (index) {
+    const state = model.states[index];
+    const sum = state.influence.reduce((acc, cur) => acc + cur, 0);
+    return sum;
+  },
+  checkIfStateIsClosed: function (index) {
+    const state = model.states[index];
+    for (let i = 0; i < state.influence.length; i++) {
+      if (state.influence[i] === undefined) return false;
+    }
+    return true;
+  },
+  changeStateToClosed: function (index) {
+    model.states[index].closed = true;
+  },
 };
 
-function fillArrayWithConditionsNumbers(n, conditions) {
-  let pos = createArrayFromDuples(conditions);
-  const arr = [];
-
-  for (let i = 0; i < n; i++) {
-    const randomInt = Math.floor(Math.random() * pos.length);
-    arr.push(pos[randomInt]);
-    pos.splice(randomInt, 1);
-  }
-
+//Other functions
+function makeBonusTokenArray(n, conditions) {
+  // 17 is the number of states less Italy
+  const arr = fillArrayWithConditionsNumbers(17, [
+    [1, 4],
+    [2, 4],
+    [3, 4],
+    [4, 5],
+  ]);
+  //8 is the index of Italy where there is always a 4 bonus token
   return [...arr.slice(0, 8), 4, ...arr.slice(8)];
-
-  function createArrayFromDuples(duples) {
-    const resultArray = [];
-
-    duples.forEach(([number, count]) => {
-      for (let i = 0; i < count; i++) {
-        resultArray.push(number);
-      }
-    });
-
-    return resultArray;
-  }
-}
-
-function fillArrayWithRandomNumbers(x, y, n) {
-  const arr = [];
-
-  for (let i = 0; i < n; i++) {
-    const randomInt = Math.floor(Math.random() * (y - x + 1)) + x;
-    arr.push(randomInt);
-  }
-
-  return arr;
 }

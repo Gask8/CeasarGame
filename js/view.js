@@ -8,6 +8,15 @@ const view = {
     const messageArea = document.getElementById("messageArea");
     messageArea.innerHTML = msg;
   },
+  displayLog: function (log) {
+    const logArea = document.getElementById("gameLog");
+    logArea.innerHTML = "";
+    for (let i = 0; i < log.length; i++) {
+      const p = document.createElement("p");
+      p.innerHTML = log[i];
+      logArea.appendChild(p);
+    }
+  },
 
   //=====================Managing InfoScreen=====================
 
@@ -42,6 +51,7 @@ const view = {
           document
             .getElementById("pp-" + piece[3])
             .classList.toggle("direction");
+          controller.selectAPiece(piece);
         } else {
           [...document.getElementsByClassName("playerPieces")].forEach(
             (piece) => {
@@ -50,7 +60,7 @@ const view = {
             }
           );
           controller.changeDirection(true);
-          controller.selectPiece(piece[3]);
+          controller.selectAPiece(piece);
           document.getElementById("pp-" + piece[3]).classList.add("selected");
         }
       });
@@ -59,6 +69,72 @@ const view = {
         model[`player${player}`].pieces.length
       }]`;
     });
+  },
+
+  displayControlMarksCounter: function (player, points) {
+    const board = document.getElementById("board");
+
+    const existingMarks = document.querySelectorAll(
+      `.controlMarksCounter.p-${player}`
+    );
+    existingMarks.forEach((mark) => mark.remove());
+
+    let inistialLocation = { x: 33, y: 185 };
+    if (player === 2) {
+      inistialLocation = { x: 334, y: 508 };
+    }
+
+    for (let i = 0; i < points; i++) {
+      const token = document.createElement("div");
+      token.classList.add("controlMarksCounter");
+      token.classList.add(`p-${player}`);
+      token.style.left = `${inistialLocation.x - 15}px`;
+      token.style.top = `${inistialLocation.y - 15}px`;
+      board.appendChild(token);
+
+      if (i % 2 === 0) {
+        inistialLocation.x += 31;
+      } else {
+        inistialLocation.x -= 31;
+        inistialLocation.y -= 30.5;
+      }
+    }
+  },
+
+  displaySenateCounter: function (player, tokens) {
+    const board = document.getElementById("board");
+    const existingMarks = document.querySelectorAll(
+      `.senateTokens.p-${player}`
+    );
+    existingMarks.forEach((mark) => mark.remove());
+
+    let inistialLocation = { x: 98.5, y: 123 };
+    if (player === 2) {
+      inistialLocation = { x: 301, y: 508 };
+    }
+
+    for (let i = 0; i < tokens; i++) {
+      const token = document.createElement("div");
+      token.classList.add("senateTokens");
+      token.classList.add(`p-${player}`);
+      token.style.left = `${inistialLocation.x - 15}px`;
+      token.style.top = `${inistialLocation.y - 15}px`;
+      board.appendChild(token);
+
+      inistialLocation.y -= 31;
+    }
+  },
+
+  addControlToken: function (player, location, times) {
+    const board = document.getElementById("board");
+    for (let i = 0; i < times; i++) {
+      const token = document.createElement("div");
+      token.classList.add("controlToken");
+      token.classList.add("p-" + player);
+      token.style.left = `${location.x - 15 + i * 5}px`;
+      token.style.top = `${location.y - 15 + i * 5}px`;
+      board.appendChild(token);
+    }
   },
 
   //=====================Display Effects=====================
@@ -75,21 +151,28 @@ const view = {
   },
 
   addBonusToken: function (type, loc, index) {
+    const board = document.getElementById("board");
     const token = document.createElement("div");
     token.classList.add("bonusToken");
     token.classList.add("bonus-" + type);
     token.id = "bonus-" + index;
-    token.style.left = `${loc.x - 13 + startX}px`;
-    token.style.top = `${loc.y - 13 + startY}px`;
-    document.body.appendChild(token);
+    token.style.left = `${loc.x - 13}px`;
+    token.style.top = `${loc.y - 13}px`;
+    board.appendChild(token);
+  },
+
+  removeBonusToken: function (index) {
+    const token = document.getElementById(`bonus-${index}`);
+    token.remove();
   },
 
   addInfluenceToken: function (player, location, numbers, direction) {
+    const board = document.getElementById("board");
     const token = document.createElement("div");
     token.classList.add("influenceToken");
     token.classList.add("p-" + player);
-    token.style.left = `${location.location.x - 16 + startX}px`;
-    token.style.top = `${location.location.y - 16 + startY}px`;
+    token.style.left = `${location.location.x - 16}px`;
+    token.style.top = `${location.location.y - 16}px`;
     token.style.transform = `rotate(${location.rotation}deg)`;
     const p1 = document.createElement("p");
     const p2 = document.createElement("p");
@@ -102,6 +185,6 @@ const view = {
     }
     token.appendChild(p1);
     token.appendChild(p2);
-    document.body.appendChild(token);
+    board.appendChild(token);
   },
 };
