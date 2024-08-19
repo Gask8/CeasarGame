@@ -10,7 +10,7 @@ const model = {
         connections: loc.conections,
         influence: new Array(loc.conections.length),
         bonusToken: bonusToken[index],
-        closed: false,
+        player: null,
       };
     }),
   borders: locations
@@ -25,6 +25,7 @@ const model = {
     }),
 
   player1: {
+    id: 1,
     name: "Player 1",
     pieces: gamePieces.slice(),
     piecesAtHand: [],
@@ -32,9 +33,11 @@ const model = {
     senateBonus: 0,
   },
   player2: {
+    id: 2,
     name: "Auto Poompei",
     pieces: gamePieces.slice(),
     piecesAtHand: [],
+    controlMarks: 12,
     senateBonus: 0,
   },
 
@@ -65,6 +68,22 @@ const model = {
         callback(player, index);
       }
     });
+  },
+
+  nullifyInfluenceInStates: function (borderIndex) {
+    const connections = model.borders[borderIndex].connections;
+    const index = connections[0] - 1;
+    const otherIndex = connections[1] - 1;
+    model.states[index].influence[
+      model.states[index].connections.findIndex(
+        (e) => e === model.states[otherIndex].id
+      )
+    ] = 0;
+    model.states[otherIndex].influence[
+      model.states[otherIndex].connections.findIndex(
+        (e) => e === model.states[index].id
+      )
+    ] = 0;
   },
 
   // ==============Pieces================
@@ -99,8 +118,8 @@ const model = {
     }
     return true;
   },
-  changeStateToClosed: function (index) {
-    model.states[index].closed = true;
+  changeStateToClosed: function (player, index) {
+    model.states[index].closed = player;
   },
 };
 

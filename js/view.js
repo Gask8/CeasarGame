@@ -18,6 +18,32 @@ const view = {
     }
   },
 
+  //=====================Managing Enemy=====================
+
+  displayEnemyPieces: function () {
+    const existingPieces = document.querySelectorAll(".enemyPieces");
+    existingPieces.forEach((piece) => piece.remove());
+    model.player2.piecesAtHand.forEach((piece) => {
+      const piecesArea = document.getElementById("enemyArea");
+      const piecesAtHand = document.createElement("div");
+      piecesAtHand.classList.add("buttonPieces");
+      piecesAtHand.classList.add("enemyPieces");
+      piecesAtHand.id = "ep-" + piece[3];
+      const p1 = document.createElement("p");
+      const p2 = document.createElement("p");
+      const img = document.createElement("img");
+      p1.innerHTML = piece[0];
+      img.src = `./images/${piece[2]}.png`;
+      img.draggable = false;
+      img.className = "playerPiecesImage";
+      p2.innerHTML = piece[1];
+      piecesAtHand.appendChild(img);
+      piecesAtHand.appendChild(p1);
+      piecesAtHand.appendChild(p2);
+      piecesArea.appendChild(piecesAtHand);
+    });
+  },
+
   //=====================Managing InfoScreen=====================
 
   displayPlayerPieces: function (player) {
@@ -27,7 +53,9 @@ const view = {
     model[`player${player}`].piecesAtHand.forEach((piece) => {
       const piecesArea = document.getElementById("piecesArea");
       const piecesAtHand = document.createElement("div");
+      piecesAtHand.classList.add("buttonPieces");
       piecesAtHand.classList.add("playerPieces");
+      piecesAtHand.classList.add("p-" + player);
       piecesAtHand.id = "pp-" + piece[3];
       const p1 = document.createElement("p");
       const p2 = document.createElement("p");
@@ -35,6 +63,7 @@ const view = {
 
       p1.innerHTML = piece[0];
       img.src = `./images/${piece[2]}.png`;
+      img.draggable = false;
       img.className = "playerPiecesImage";
       p2.innerHTML = piece[1];
 
@@ -171,6 +200,7 @@ const view = {
     const token = document.createElement("div");
     token.classList.add("influenceToken");
     token.classList.add("p-" + player);
+    token.id = "it-" + location.id;
     token.style.left = `${location.location.x - 16}px`;
     token.style.top = `${location.location.y - 16}px`;
     token.style.transform = `rotate(${location.rotation}deg)`;
@@ -186,5 +216,31 @@ const view = {
     token.appendChild(p1);
     token.appendChild(p2);
     board.appendChild(token);
+  },
+
+  nullifyInfluenceToken: function (player, location) {
+    const token = document.getElementById(`it-${location.id}`);
+    token.remove();
+    const board = document.getElementById("board");
+    const newToken = document.createElement("div");
+    newToken.classList.add("influenceToken");
+    newToken.classList.add("p-" + player);
+    newToken.style.left = `${location.location.x - 16}px`;
+    newToken.style.top = `${location.location.y - 16}px`;
+    board.appendChild(newToken);
+  },
+
+  drawDirectionArrows: function (location) {
+    const arrows = document.querySelectorAll(".arrowHelper");
+    arrows.forEach((arrow) => arrow.remove());
+
+    const board = document.getElementById("board");
+    const helper = document.createElement("div");
+    helper.classList.add("arrowHelper");
+    helper.style.left = `${location.location.x - 16}px`;
+    helper.style.top = `${location.location.y - 16}px`;
+    helper.style.transform = `rotate(${location.rotation}deg)`;
+
+    board.appendChild(helper);
   },
 };

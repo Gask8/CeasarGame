@@ -4,12 +4,14 @@ const controller = {
   selectedPiece: null,
   selectedDirection: true,
   gameLog: [],
+  gameEnd: false,
 
   startGame: function () {
     this.startGameStateClick();
     this.startShowLocationsWithMouseMovement();
-    this.startPlayer();
+    this.startPlayers();
     this.addAllBonusToken();
+    view.displayEnemyPieces();
 
     view.displayControlMarksCounter(1, 12);
     view.displayControlMarksCounter(2, 12);
@@ -32,18 +34,42 @@ const controller = {
       const locationIndex = auxiliar.getLocationsIndexByLocation(loc);
 
       switch (controller.gameState) {
-        // case 0:
-        //   // Check if the location is clicked
-        //   locationIndex !== null
-        //     ? view.displayMessage(locations[locationIndex].id)
-        //     : "";
-        //   break;
-        // 1. Influence Token Placement
+        // 0. Influence Token Placement
         case 0:
           if (locationIndex >= 18) {
             controller.placeInfluenceToken(1, locationIndex - 18);
-            // controller.gameState = 1;
           }
+          break;
+        // 1. Nullify State
+        case 1:
+          // Nullify influence in border
+          if (locationIndex >= 18) {
+            model.nullifyInfluenceInStates(locationIndex - 18);
+            view.nullifyInfluenceToken(2, locations[locationIndex]);
+            controller.addToGameLog(
+              `Nullified Influence between ${auxiliar
+                .getConntectionsText(locations[locationIndex])
+                .join(" and ")}`,
+              1
+            );
+            //Keep Playing
+            //Change Turn And Check If Game End
+            controller.gameState = 0;
+            controller.playerTurn = controller.playerTurn === 1 ? 2 : 1;
+            controller.manageIfGameEnd(this.playerTurn);
+            //Bot Play
+            if (controller.playerTurn === 2) controller.botPlay();
+            // Refresh View
+            view.displayPlayerPieces(1);
+            view.displayEnemyPieces();
+          }
+
+          break;
+        // 2. Click Information
+        case 2:
+          locationIndex !== null
+            ? view.displayMessage(locations[locationIndex].id)
+            : "";
           break;
         default:
           return;
@@ -52,45 +78,85 @@ const controller = {
     document.addEventListener("click", checkMousePos);
   },
 
-  manageIfHasWon: function (player) {
-    //Win Condition #1
-    if (player.controlMarks === 0) {
-      view.displayMessage(`${player.name} Wins!`);
+  manageIfGameEnd: function (player) {
+    //Win Condition #1 Control Marks are 0
+    if (model.player1.controlMarks <= 0) {
+      view.displayMessage(`${model.player1.name} Wins!`);
+      this.addToGameLog(
+        `<span class=victory>${model.player1.name} Wins!</span>`
+      );
+      this.gameEnd = true;
+    } else if (model.player2.controlMarks <= 0) {
+      view.displayMessage(`${model.player2.name} Wins!`);
+      this.addToGameLog(
+        `<span class=victory>${model.player2.name} Wins!</span>`
+      );
+      this.gameEnd = true;
     }
-    //Win Condition #2
+    //Win Condition #2 Player can not play any piece
+    if (player) {
+      const nextPlayer = player === 1 ? 2 : 1;
+      if (!auxiliar.checkIfItIsPosibleToPlacePiece(player)) {
+        view.displayMessage(`${model["player" + nextPlayer].name} Wins!`);
+        this.addToGameLog(
+          `${
+            model["player" + player].name
+          } can't make any action, <span class=victory>${
+            model["player" + nextPlayer].name
+          } Wins!</span>`
+        );
+        this.gameEnd = true;
+      }
+    }
     return;
   },
 
   playBonusToken: function (player, index) {
+    const dic = {
+      1: "Extra Turn",
+      2: "Extra Piece",
+      3: "Destroy Influence",
+      4: "Senate Token",
+    };
+    view.removeBonusToken(index);
     const tokenType = model.states[index].bonusToken;
+    this.addToGameLog(
+      `Bonus Token: <span class=green>${dic[tokenType]}</span>`,
+      player
+    );
+    // Bot only plays Senate Tokens
+    if (tokenType !== 4 && player === 2) {
+      return;
+    }
+
     switch (tokenType) {
       case 1:
         //Extra turn
-        view.displayMessage("Bonus Extra Turn");
+        this.playerTurn = 2;
         break;
       case 2:
-        //Extra turn
+        //Extra Piece
         model.grabAPiece(player, 1);
-        view.displayMessage("Bonus Extra Piece");
-        view.displayPlayerPieces(player);
         break;
       case 3:
         //Destroy Influence
-        view.displayMessage("Destroy Influence");
+        console.log("Destroy Influence");
+        view.displayMessage("Select a Border to Destroy Influence");
+        this.gameState = 1;
         break;
       default:
         //Senate Token
         model[`player${player}`].senateBonus++;
         controller.addToGameLog(
-          `Senate Token acquired. Now ${model[`player${player}`].name} has ${
-            model[`player${player}`].senateBonus
-          }`,
+          `<span class=green>Senate Token</span> acquired. Now ${
+            model[`player${player}`].name
+          } has ${model[`player${player}`].senateBonus}`,
           player
         );
         model[`player${player}`].controlMarks -=
           model[`player${player}`].senateBonus;
         view.displayControlMarksCounter(
-          player,
+          model[`player${player}`].id,
           model[`player${player}`].controlMarks
         );
         view.displaySenateCounter(player, model[`player${player}`].senateBonus);
@@ -110,6 +176,9 @@ const controller = {
       const locationIndex = auxiliar.getLocationsIndexByLocation(loc);
       if (locationIndex !== null) {
         const text = controller.getLocationHoverMessage(locationIndex);
+        if (locationIndex >= 18) {
+          view.drawDirectionArrows(locations[locationIndex]);
+        }
         view.displayInfo(text);
       } else {
         view.displayInfo("");
@@ -118,9 +187,24 @@ const controller = {
     document.addEventListener("mousemove", printMousePos);
   },
 
+  //=====================Auto Play=====================
+
+  botPlay: function () {
+    this.addToGameLog("Auto Play", 2);
+    // let borderId = autoPlay.botAutoDecision(); //a piece is also selected
+    // if (borderId === null) borderId = autoPlay.botRandomDecision(); //a piece is also selected
+    let borderId = autoPlay.botRandomDecision();
+    console.log("border", borderId);
+    this.placeInfluenceToken(2, borderId);
+  },
+
   //=====================Using Model=====================
 
   placeInfluenceToken: function (player, borderId) {
+    if (this.gameEnd) {
+      return;
+    }
+
     const direction = this.selectedDirection;
     const pieceNumbers = gamePieces[this.selectedPiece];
     const border = model.borders[borderId];
@@ -146,9 +230,6 @@ const controller = {
       } between ${auxiliar.getConntectionsText(location).join(" and ")}`,
       player
     );
-    model.discardAPiece(player, this.selectedPiece);
-    model.grabAPiece(player, 1);
-    view.displayPlayerPieces(player);
     //Change Variables
     model.borders[borderId].player = player;
     model.setInfluenceInState(
@@ -158,7 +239,22 @@ const controller = {
       direction,
       this.manageClosedState
     );
+    model.discardAPiece(player, this.selectedPiece);
+    //Finalize Turn
+    model.grabAPiece(player, 1);
     this.selectedPiece = null;
+    this.selectedDirection = true;
+
+    if (this.gameState === 0) {
+      //Change Turn And Check If Game End
+      this.playerTurn = this.playerTurn === 1 ? 2 : 1;
+      controller.manageIfGameEnd(this.playerTurn);
+      //Bot Play
+      if (this.playerTurn === 2) this.botPlay();
+    }
+    // Refresh View
+    view.displayEnemyPieces();
+    view.displayPlayerPieces(player);
   },
 
   manageClosedState: function (player, index) {
@@ -175,46 +271,52 @@ const controller = {
     controller.addToGameLog(`State Closed: ${state.name}`, player);
     //decrease control marks if not tie
     if (sum !== 0) {
+      model.states[index].player = playerObj.id;
+      playerObj.controlMarks--;
       howMuchControl++;
-      controller.addToGameLog(`${state.name} was won by ${playerObj.name}`);
+      controller.addToGameLog(
+        `<span class=victory>${state.name}</span> was won by <span class=log-${playerObj.id}>${playerObj.name}</span`
+      );
       if (index === 8) {
+        playerObj.controlMarks--;
         howMuchControl++; //Italy has two control marks
         controller.addToGameLog(
-          `The Glory of Rome was won by ${playerObj.name}`
+          `The <span class=victory>Glory of ROME</span> was won by <span class=log-${playerObj.id}>${playerObj.name}</span>`
         );
       }
       //Check if adjacent states are also closed
       model.states[index].connections.forEach((i) => {
         if (model.checkIfStateIsClosed(i - 1)) {
-          const sum2 = model.checkStateInfluenceSum(i - 1);
-          if (sum2 > 0 && player === 1) {
+          if (model.states[i].player === playerObj.id) {
+            playerObj.controlMarks--;
             howMuchControl++;
-          } else if (sum2 < 0 && player === 2) {
-            howMuchControl++;
+            controller.addToGameLog(
+              `One more Control Marker due Adjacent State ${
+                locations[i - 1].name
+              }`,
+              playerObj.id.name
+            );
           }
-          view.displayMessage("Adjacent State Also Closed");
-          controller.addToGameLog(
-            `One more Control Marker by Adjacent State ${
-              locations[i - 1].name
-            }`,
-            player
-          );
         }
       });
       //Alter View
-      playerObj.controlMarks -= howMuchControl;
-      view.displayControlMarksCounter(player, playerObj.controlMarks);
-      view.addControlToken(player, state.location, howMuchControl);
+      view.displayControlMarksCounter(playerObj.id, playerObj.controlMarks);
+      view.addControlToken(
+        playerObj.id,
+        bonusLocations[state.id - 1],
+        howMuchControl
+      );
     }
 
+    controller.manageIfGameEnd();
     controller.playBonusToken(player, index);
-    controller.manageIfHasWon(player);
   },
 
   // Interacting with Player
-  startPlayer: function () {
+  startPlayers: function () {
     model.grabAPiece(1, 2);
-    view.displayPlayerPieces;
+    model.grabAPiece(2, 2);
+    view.displayPlayerPieces(1);
   },
 
   selectAPiece: function (piece) {
@@ -238,7 +340,7 @@ const controller = {
 
   addAllBonusToken: function () {
     for (let i = 0; i < model.states.length; i++) {
-      view.addBonusToken(model.states[i].bonusToken, locations[i].location, i);
+      view.addBonusToken(model.states[i].bonusToken, bonusLocations[i], i);
     }
   },
 
@@ -248,7 +350,7 @@ const controller = {
     if (loc.type === "border") {
       return `${loc.type.toUpperCase()}<br> 
       =================<br> 
-      Connecting: <br> ${connections[0]} 🔺<br> ${connections[1]} 🔻 <br>
+      Connecting: <br> ${connections[0]}<br> ${connections[1]} <br>
       =================<br> 
       Type: ${loc.unit.toLocaleUpperCase()}`;
     } else {
@@ -258,7 +360,9 @@ const controller = {
        ${loc.name ? loc.name : ""}<br> 
       =================<br> 
     Influence: ${model.checkStateInfluenceSum(index)}<br>
-    Closed: ${model.checkIfStateIsClosed(index)}`;
+     LEADER: ${
+       model.states[index].player ? model.states[index].player : "FREE"
+     }`;
     }
   },
 
@@ -266,7 +370,7 @@ const controller = {
     let insertText = message;
     if (player) {
       let playerObj = model[`player${player}`];
-      insertText = `${playerObj.name}: - ${message}`;
+      insertText = `<span class=log-${player}>${playerObj.name}:</span> ${message}`;
     }
     this.gameLog.unshift(insertText);
     view.displayLog(this.gameLog);

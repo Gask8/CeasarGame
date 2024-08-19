@@ -94,7 +94,7 @@ html {
   background-image: url("./images/info5.png");
   background-size: 100% 100%;
   width: 30%;
-  height: 700px;
+  height: 100vh;
   /* background: #00000059; */
   /* border: 1px solid black; */
   border-radius: 10px;
@@ -103,12 +103,14 @@ html {
 
 #seccondaryLayout {
   width: 30%;
-  height: 700px;
+  height: 100vh;
+  grid-template-rows: 30% 20% 40%;
+  row-gap: 30px;
 }
 
 #gameLogArea {
   width: 100%;
-  height: 200px;
+  height: 35vh;
   background: #00000059;
   border-radius: 5%;
   border: 1px solid black;
@@ -117,11 +119,62 @@ html {
 
 #gameLog {
   width: 100%;
-  height: 100px;
+  height: 23vh;
   scroll-behavior: smooth;
   overflow-y: scroll;
   color: #f4f8ff;
   font-family: "Luxurious Roman", serif;
+}
+
+#gameLog span {
+  font-style: italic;
+}
+#gameLog .log-1 {
+  color: #ff6464;
+  margin-right: 10px;
+}
+#gameLog .log-2 {
+  color: #77afff;
+  margin-right: 10px;
+}
+#gameLog .victory {
+  font-weight: bold;
+  background-image: linear-gradient(
+    to right,
+    #cb9b51 0%,
+    #f6e27a 45%,
+    #f6f2c0 50%,
+    #f6e27a 55%,
+    #cb9b51 100%
+  );
+  color: transparent;
+  -webkit-background-clip: text;
+}
+#gameLog .green {
+  color: #56e756;
+}
+
+#animationArea {
+  width: 100%;
+  height: 20vh;
+  /* border: 1px solid black; */
+  border-radius: 5%;
+  /* background: #00000059; */
+  /* background: url("./images/animationWin1.gif") no-repeat center; */
+  background-size: cover;
+}
+
+#enemyArea {
+  width: 100%;
+  height: 20vh;
+  background-image: url("./images/back3.jpg");
+  background-size: 100%;
+  background-position: center;
+  border-radius: 5%;
+  border: 1px solid black;
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
 }
 
 /* ============Displays=============== */
@@ -214,6 +267,10 @@ html {
   pointer-events: none;
   font-size: 10px;
   text-align: center;
+
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
 }
 
 .influenceToken p:last-child {
@@ -263,12 +320,15 @@ html {
 
 /* ============Player Pieces=============== */
 
-.playerPieces {
+.enemyPieces {
+  background-color: #2776e7;
+}
+
+.buttonPieces {
   width: 70px;
   height: 70px;
   border: 1px solid black;
   border-radius: 50%;
-  background-color: #e32f2f;
   box-shadow: inset -7px -10px 8px rgba(0, 0, 0, 0.2);
   padding: 10px;
   display: grid;
@@ -277,12 +337,19 @@ html {
   justify-items: center;
   align-items: center;
   font-family: emoji;
-  transition: all 0.1s ease-out;
-  cursor: pointer;
+
+  -webkit-user-select: none; /* Safari */
+  -ms-user-select: none; /* IE 10 and IE 11 */
+  user-select: none; /* Standard syntax */
 }
 
-.playerPieces p:last-child {
+.buttonPieces p:last-child {
   transform: rotate(180deg);
+}
+
+.playerPieces {
+  transition: all 0.1s ease-out;
+  cursor: pointer;
 }
 
 .playerPieces:hover {
@@ -298,14 +365,52 @@ html {
 .selected::after {
   position: absolute;
   top: 0;
-  right: 0;
+  left: 0;
   content: "🔺";
-  transform: translate(50%, -50%);
-  filter: brightness(2);
+  transform: translate(-50%, -50%);
+  filter: brightness(4);
 }
 
-.direction::after {
-  transform: rotate(180deg) translate(-50%, -300%);
+.selected::before {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  content: "🔻";
+  transform: translate(-50%, 50%);
+}
+
+.arrowHelper {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  pointer-events: none;
+}
+
+.arrowHelper::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  content: "🔺";
+  transform: translate(30%, -90%);
+  filter: brightness(4);
+}
+
+.arrowHelper::after {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  content: "🔻";
+  transform: translate(30%, 90%);
+}
+
+.direction p:last-child {
+  grid-column-start: 0;
+  grid-row-start: 1;
+  transform: rotate(0deg);
+}
+
+.direction p:nth-child(2) {
+  transform: rotate(180deg);
 }
 
 .playerPiecesImage {
