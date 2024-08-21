@@ -1,6 +1,21 @@
-//const AutoPlay
+//1 Grab 2, Resolve, Discard
+//2 Grab 1, Resolve
+const easyMovements = [1, 1, 1, 1, 2, 2];
 
+//AutoPlay
 const autoPlay = {
+  movements: easyMovements.slice(),
+
+  selectAMovement: function () {
+    if (this.movements.length === 0) {
+      this.movements = easyMovements.slice();
+    }
+    const randomInt = Math.floor(Math.random() * this.movements.length);
+    let movement = this.movements[randomInt];
+    this.movements.splice(randomInt, 1);
+    return movement;
+  },
+
   selectAPieceIfPosible: function (pieces, border, condition) {
     const posiblePieces = pieces.filter(
       (p) => p[2] === border.unit || p[2] === "wild"
@@ -45,19 +60,20 @@ const autoPlay = {
       //Choice #1: Can he control a state?
       for (let i = 0; i < almostClosedStates.length; i++) {
         const state = almostClosedStates[i];
-        const sum = model.checkStateInfluenceSum(state.id - 1);
+        const sum = model.checkStateInfluenceSum(state.id);
         if (sum < 0) {
           const findIndex = auxiliar.getLastBorderIndex(state);
           const border = auxiliar.getBorderByStateConnections(state, findIndex);
           if (this.selectAPieceIfPosible(pieces, border, "lowest")) {
-            return border.id - 101;
+            console.log("Choice #1");
+            return border.id - 100;
           }
         }
       }
       //Choice #2: Can he close a state?
       for (let i = 0; i < almostClosedStates.length; i++) {
         const state = almostClosedStates[i];
-        const sum = model.checkStateInfluenceSum(state.id - 1);
+        const sum = model.checkStateInfluenceSum(state.id);
         if (sum > 0) {
           const findIndex = auxiliar.getLastBorderIndex(state);
           const border = auxiliar.getBorderByStateConnections(state, findIndex);
@@ -68,7 +84,8 @@ const autoPlay = {
               this.selectAPieceIfPosible(pieces, border, "lowest");
             }
             console.log(gamePieces[controller.selectedPiece][1]);
-            return border.id - 101;
+            console.log("Choice #2");
+            return border.id - 100;
           }
         }
       }
@@ -76,30 +93,86 @@ const autoPlay = {
 
     // const availableBorders = model.borders.filter((b) => !b.player);
     const availableStates = model.states.filter((s) => s.player === null);
-    let highestInfluence = 0;
-    let highestInfluenceState = null;
-    //Choice #3: Is he losing a unclaimed state?
-    for (let i = 0; i < availableStates.length; i++) {
-      const state = availableStates[i];
-      const sum = model.checkStateInfluenceSum(state.id - 1);
-      if (sum > highestInfluence) {
-        highestInfluence = sum;
-        highestInfluenceState = state;
-      }
-    }
 
-    // almostClosedStates.forEach((state) => {
-    //   const findIndex = auxiliar.getLastBorderIndex(state);
-    //   const border = auxiliar.getBorderByStateConnections(state, findIndex);
-    //   const piece = pieces.find((p) => p[2] === border.unit);
-    //   if (piece) {
-    //     this.selectAPiece(piece);
-    //     borderId = border.id - 101;
-    //     return piece;
+    //Choice #3: Is he losing a unclaimed state?
+    // let highestInfluence = 0;
+    // let highestInfluenceState = null;
+    // for (let i = 0; i < availableStates.length; i++) {
+    //   const state = availableStates[i];
+    //   const sum = model.checkStateInfluenceSum(state.id - 1);
+    //   if (sum > highestInfluence) {
+    //     highestInfluence = sum;
+    //     highestInfluenceState = state;
     //   }
-    // });
+    // }
+    // if (highestInfluence > 0) {
+    //   return auxiliar.pickBetweenBestBorder(highestInfluenceState);
+    // }
+
+    //Choice #4: Is he present in any province?
+
+    //Choice #5: Pick a state adjacent to one they already control
+
+    //Choice #6: Pick a central state (Italia, Sardinia, Sicilia, Achaia, Creta)
+
+    //Choice #7: Random Choice
+    console.log("Choice #7");
+    borderId = this.botRandomDecision();
 
     return borderId;
+  },
+
+  botTieBreakerBorder: function (state) {
+    const availableStates = state.connections.filter(
+      (v) => model.states[v].player === null
+    );
+
+    // #1 Tie Breaker: State is losing the most
+    let highestInfluence = 0;
+    let border1 = null;
+    for (let i = 0; i < availableStates.length; i++) {
+      const state2 = availableStates[i];
+      const sum = model.checkStateInfluenceSum(state2);
+      if (highestInfluence > sum) {
+        highestInfluence = sum;
+        border1 = model.borders.find(
+          (b) =>
+            b.connections.includes(state.id) &&
+            b.connections.includes(state2.id)
+        );
+      }
+    }
+    if (border1) return border1;
+
+    // #2 Tie Breaker: Central States (Italia, Sardinia, Sicilia, Achaia, Creta)
+    const centralStates = [8, 4, 7, 11, 14];
+    let border2 = null;
+    for (let i = 0; i < availableStates.length; i++) {
+      const state2 = availableStates[i];
+      if (centralStates.includes(state2.id)) {
+        highestInfluence = sum;
+        border2 = model.borders.find(
+          (b) =>
+            b.connections.includes(state.id) &&
+            b.connections.includes(state2.id)
+        );
+      }
+    }
+    if (border2) return border2;
+
+    // #3 Tie Breaker: Random Choice
+    // return bestBorder;
+
+    // #1 Tie Breaker: States adjencent to ones they have already won
+    // #2 Tie Breaker: States with Senate Token
+    // #3 Tie Breaker: Central States (Sardinia, Italia, Sicilia, Achaia, Creta)
+    // #4 Tie Breaker: Random Choice
+  },
+
+  botReturnLeftPiece: function () {
+    //Most Left piece is return to the deck
+    model.player2.pieces.push(model.player2.piecesAtHand[0]);
+    model.player2.piecesAtHand.splice(0, 1);
   },
 
   botRandomDecision: function () {
@@ -114,7 +187,7 @@ const autoPlay = {
       possibleBorders = availableBorders.filter((b) => b.unit === piece[2]);
     }
     const randomBorder = Math.floor(Math.random() * possibleBorders.length);
-    return possibleBorders[randomBorder].id - 101;
+    return possibleBorders[randomBorder].id - 100;
   },
 };
 
@@ -162,8 +235,7 @@ const auxiliar = {
   },
 
   getBorderByStateConnections: function (state, borderID) {
-    const valuesToCheck = [state.id, state.connections[borderID]];
-    console.log(valuesToCheck);
+    // const valuesToCheck = [state.id, state.connections[borderID]];
     const result = model.borders.filter(
       (border) =>
         border.connections.includes(state.id) &&

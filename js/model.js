@@ -3,7 +3,7 @@ const bonusToken = makeBonusTokenArray();
 const model = {
   // ==============Variables================
   states: locations
-    .filter((l, index) => index < 18)
+    .filter((l) => l.id < 18)
     .map((loc, index) => {
       return {
         id: loc.id,
@@ -14,7 +14,7 @@ const model = {
       };
     }),
   borders: locations
-    .filter((l, index) => l.id > 100)
+    .filter((l) => l.id >= 100)
     .map((loc) => {
       return {
         id: loc.id,
@@ -26,7 +26,7 @@ const model = {
 
   player1: {
     id: 1,
-    name: "Player 1",
+    name: "Ceasar",
     pieces: gamePieces.slice(),
     piecesAtHand: [],
     controlMarks: 12,
@@ -56,8 +56,8 @@ const model = {
     }
 
     d.forEach((v, i) => {
-      const index = connections[v] - 1;
-      const otherIndex = v === 0 ? connections[1] - 1 : connections[0] - 1;
+      const index = connections[v];
+      const otherIndex = v === 0 ? connections[1] : connections[0];
       model.states[index].influence[
         model.states[index].connections.findIndex(
           (e) => e === model.states[otherIndex].id
@@ -72,8 +72,8 @@ const model = {
 
   nullifyInfluenceInStates: function (borderIndex) {
     const connections = model.borders[borderIndex].connections;
-    const index = connections[0] - 1;
-    const otherIndex = connections[1] - 1;
+    const index = connections[0];
+    const otherIndex = connections[1];
     model.states[index].influence[
       model.states[index].connections.findIndex(
         (e) => e === model.states[otherIndex].id

@@ -1,6 +1,6 @@
 const controller = {
   gameState: 0,
-  playerTurn: 1,
+  playerTurn: 2,
   selectedPiece: null,
   selectedDirection: true,
   gameLog: [],
@@ -17,6 +17,7 @@ const controller = {
     view.displayControlMarksCounter(2, 12);
 
     this.addToGameLog("Game Started");
+    this.botPlay();
     this.addToGameLog("Start Turn", 1);
     view.displayMessage("Game Started");
   },
@@ -55,13 +56,7 @@ const controller = {
             //Keep Playing
             //Change Turn And Check If Game End
             controller.gameState = 0;
-            controller.playerTurn = controller.playerTurn === 1 ? 2 : 1;
-            controller.manageIfGameEnd(this.playerTurn);
-            //Bot Play
-            if (controller.playerTurn === 2) controller.botPlay();
-            // Refresh View
-            view.displayPlayerPieces(1);
-            view.displayEnemyPieces();
+            controller.endTurn();
           }
 
           break;
@@ -191,11 +186,20 @@ const controller = {
 
   botPlay: function () {
     this.addToGameLog("Auto Play", 2);
-    // let borderId = autoPlay.botAutoDecision(); //a piece is also selected
+    const movement = autoPlay.selectAMovement();
+    this.addToGameLog(`Movement: ${movement}`, 2);
+    console.log("movement", movement);
+    model.grabAPiece(2, 1);
+    if (movement === 1) model.grabAPiece(2, 1);
+    let borderId = autoPlay.botAutoDecision(); //a piece is also selected
     // if (borderId === null) borderId = autoPlay.botRandomDecision(); //a piece is also selected
-    let borderId = autoPlay.botRandomDecision();
+    // let borderId = autoPlay.botRandomDecision();
     console.log("border", borderId);
     this.placeInfluenceToken(2, borderId);
+    if (movement === 1) {
+      autoPlay.botReturnLeftPiece();
+      view.displayEnemyPieces();
+    }
   },
 
   //=====================Using Model=====================
@@ -241,20 +245,11 @@ const controller = {
     );
     model.discardAPiece(player, this.selectedPiece);
     //Finalize Turn
-    model.grabAPiece(player, 1);
+    if (this.playerTurn === 1) model.grabAPiece(player, 1);
     this.selectedPiece = null;
     this.selectedDirection = true;
 
-    if (this.gameState === 0) {
-      //Change Turn And Check If Game End
-      this.playerTurn = this.playerTurn === 1 ? 2 : 1;
-      controller.manageIfGameEnd(this.playerTurn);
-      //Bot Play
-      if (this.playerTurn === 2) this.botPlay();
-    }
-    // Refresh View
-    view.displayEnemyPieces();
-    view.displayPlayerPieces(player);
+    if (this.gameState === 0) controller.endTurn();
   },
 
   manageClosedState: function (player, index) {
@@ -286,14 +281,12 @@ const controller = {
       }
       //Check if adjacent states are also closed
       model.states[index].connections.forEach((i) => {
-        if (model.checkIfStateIsClosed(i - 1)) {
+        if (model.checkIfStateIsClosed(i)) {
           if (model.states[i].player === playerObj.id) {
             playerObj.controlMarks--;
             howMuchControl++;
             controller.addToGameLog(
-              `One more Control Marker due Adjacent State ${
-                locations[i - 1].name
-              }`,
+              `One more Control Marker due Adjacent State ${locations[i].name}`,
               playerObj.id.name
             );
           }
@@ -303,7 +296,7 @@ const controller = {
       view.displayControlMarksCounter(playerObj.id, playerObj.controlMarks);
       view.addControlToken(
         playerObj.id,
-        bonusLocations[state.id - 1],
+        bonusLocations[state.id],
         howMuchControl
       );
     }
@@ -312,10 +305,20 @@ const controller = {
     controller.playBonusToken(player, index);
   },
 
+  endTurn: function () {
+    this.playerTurn = this.playerTurn === 1 ? 2 : 1;
+    this.manageIfGameEnd(this.playerTurn);
+    //Bot Play
+    if (this.playerTurn === 2) this.botPlay();
+    // Refresh View
+    view.displayPlayerPieces(1);
+    view.displayEnemyPieces();
+  },
+
   // Interacting with Player
   startPlayers: function () {
     model.grabAPiece(1, 2);
-    model.grabAPiece(2, 2);
+    model.grabAPiece(2, 3);
     view.displayPlayerPieces(1);
   },
 
