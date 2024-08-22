@@ -185,9 +185,11 @@ const controller = {
   //=====================Auto Play=====================
 
   botPlay: function () {
+    if (this.gameEnd) return;
+    const dic = ["", "A: Grab 2, Resolve, Discard", "B: Grab 1, Resolve"];
     this.addToGameLog("Auto Play", 2);
     const movement = autoPlay.selectAMovement();
-    this.addToGameLog(`Movement: ${movement}`, 2);
+    this.addToGameLog(`Movement: ${dic[movement]}`, 2);
     console.log("movement", movement);
     model.grabAPiece(2, 1);
     if (movement === 1) model.grabAPiece(2, 1);

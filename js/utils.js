@@ -26,7 +26,7 @@ const autoPlay = {
     }
 
     let piece = null;
-    if (condition === "lowest") {
+    if (condition === "highest") {
       controller.changeDirection(true);
       let lowestNumber = 6;
       for (let i = 0; i < posiblePieces.length; i++) {
@@ -35,7 +35,7 @@ const autoPlay = {
           piece = posiblePieces[i];
         }
       }
-    } else if (condition === "highest") {
+    } else if (condition === "lowest") {
       controller.changeDirection();
       let highestNumber = 0;
       for (let i = 0; i < posiblePieces.length; i++) {
@@ -51,9 +51,7 @@ const autoPlay = {
   },
 
   botAutoDecision: function () {
-    let borderId = null;
     const pieces = model.player2.piecesAtHand;
-
     //Check if one state is almost closed
     const almostClosedStates = auxiliar.checkWhichStatesAreAlmostClosed();
     if (almostClosedStates.length > 0) {
@@ -79,7 +77,7 @@ const autoPlay = {
           const border = auxiliar.getBorderByStateConnections(state, findIndex);
           if (this.selectAPieceIfPosible(pieces, border, "highest")) {
             // Check if the can win State with highest piece
-            if (sum - gamePieces[controller.selectedPiece][1] <= 0) {
+            if (sum - gamePieces[controller.selectedPiece][0] <= 0) {
               // Else just close the state with lowest piece
               this.selectAPieceIfPosible(pieces, border, "lowest");
             }
@@ -93,81 +91,106 @@ const autoPlay = {
 
     // const availableBorders = model.borders.filter((b) => !b.player);
     const availableStates = model.states.filter((s) => s.player === null);
-
     //Choice #3: Is he losing a unclaimed state?
-    // let highestInfluence = 0;
-    // let highestInfluenceState = null;
-    // for (let i = 0; i < availableStates.length; i++) {
-    //   const state = availableStates[i];
-    //   const sum = model.checkStateInfluenceSum(state.id - 1);
-    //   if (sum > highestInfluence) {
-    //     highestInfluence = sum;
-    //     highestInfluenceState = state;
-    //   }
-    // }
-    // if (highestInfluence > 0) {
-    //   return auxiliar.pickBetweenBestBorder(highestInfluenceState);
-    // }
+    let highestInfluence = 0;
+    let highestInfluenceState = null;
+    for (let i = 0; i < availableStates.length; i++) {
+      const state = availableStates[i];
+      const sum = model.checkStateInfluenceSum(state.id);
+      if (sum > highestInfluence) {
+        highestInfluence = sum;
+        highestInfluenceState = state;
+      }
+    }
+    if (highestInfluence > 0) {
+      const stateBorders = highestInfluenceState.connections.map((v) => {
+        const border = auxiliar.foundBorderBetweenStates(
+          highestInfluenceState,
+          model.states[v]
+        );
+        if (border.player === null) {
+          return border;
+        }
+      });
+      const availableBorders = stateBorders.filter((b) => b !== undefined);
+      for (let i = 0; i < availableBorders.length; i++) {
+        const border = availableBorders[i];
+        if (this.selectAPieceIfPosible(pieces, border, "highest")) {
+          console.log("Choice #3");
+          return border.id - 100;
+        }
+      }
+    }
 
     //Choice #4: Is he present in any province?
-
     //Choice #5: Pick a state adjacent to one they already control
 
     //Choice #6: Pick a central state (Italia, Sardinia, Sicilia, Achaia, Creta)
+    const centralStates = [8, 4, 7, 11, 14];
+    for (let i = 0; i < centralStates.length; i++) {
+      const state = model.states[centralStates[i]];
+      const stateBorders = state.connections.map((v) => {
+        const border = auxiliar.foundBorderBetweenStates(
+          state,
+          model.states[v]
+        );
+        if (border.player === null) {
+          return border;
+        }
+      });
+      const availableBorders = stateBorders.filter((b) => b !== undefined);
+      for (let i = 0; i < availableBorders.length; i++) {
+        const border = availableBorders[i];
+        if (this.selectAPieceIfPosible(pieces, border, "highest")) {
+          console.log("Choice #6");
+          return border.id - 100;
+        }
+      }
+    }
 
     //Choice #7: Random Choice
     console.log("Choice #7");
-    borderId = this.botRandomDecision();
-
-    return borderId;
+    return this.botRandomDecision();
   },
 
-  botTieBreakerBorder: function (state) {
-    const availableStates = state.connections.filter(
-      (v) => model.states[v].player === null
-    );
+  // botTieBreakerBorder: function (state) {
+  //   const availableStates = state.connections.filter(
+  //     (v) => model.states[v].player === null
+  //   );
 
-    // #1 Tie Breaker: State is losing the most
-    let highestInfluence = 0;
-    let border1 = null;
-    for (let i = 0; i < availableStates.length; i++) {
-      const state2 = availableStates[i];
-      const sum = model.checkStateInfluenceSum(state2);
-      if (highestInfluence > sum) {
-        highestInfluence = sum;
-        border1 = model.borders.find(
-          (b) =>
-            b.connections.includes(state.id) &&
-            b.connections.includes(state2.id)
-        );
-      }
-    }
-    if (border1) return border1;
+  //   // #1 Tie Breaker: State is losing the most
+  //   let highestInfluence = 0;
+  //   let border1 = null;
+  //   for (let i = 0; i < availableStates.length; i++) {
+  //     const state2 = availableStates[i];
+  //     const sum = model.checkStateInfluenceSum(state2);
+  //     if (highestInfluence > sum) {
+  //       highestInfluence = sum;
+  //       border1 = auxiliar.foundBorderBetweenStates(state, state2);
+  //     }
+  //   }
+  //   if (border1) return border1;
 
-    // #2 Tie Breaker: Central States (Italia, Sardinia, Sicilia, Achaia, Creta)
-    const centralStates = [8, 4, 7, 11, 14];
-    let border2 = null;
-    for (let i = 0; i < availableStates.length; i++) {
-      const state2 = availableStates[i];
-      if (centralStates.includes(state2.id)) {
-        highestInfluence = sum;
-        border2 = model.borders.find(
-          (b) =>
-            b.connections.includes(state.id) &&
-            b.connections.includes(state2.id)
-        );
-      }
-    }
-    if (border2) return border2;
+  //   // #2 Tie Breaker: Central States (Italia, Sardinia, Sicilia, Achaia, Creta)
+  //   const centralStates = [8, 4, 7, 11, 14];
+  //   let border2 = null;
+  //   for (let i = 0; i < availableStates.length; i++) {
+  //     const state2 = availableStates[i];
+  //     if (centralStates.includes(state2.id)) {
+  //       highestInfluence = sum;
+  //       border2 = auxiliar.foundBorderBetweenStates(state, state2);
+  //     }
+  //   }
+  //   if (border2) return border2;
 
-    // #3 Tie Breaker: Random Choice
-    // return bestBorder;
+  //   // #3 Tie Breaker: Random Choice
+  //   // return bestBorder;
 
-    // #1 Tie Breaker: States adjencent to ones they have already won
-    // #2 Tie Breaker: States with Senate Token
-    // #3 Tie Breaker: Central States (Sardinia, Italia, Sicilia, Achaia, Creta)
-    // #4 Tie Breaker: Random Choice
-  },
+  //   // #1 Tie Breaker: States adjencent to ones they have already won
+  //   // #2 Tie Breaker: States with Senate Token
+  //   // #3 Tie Breaker: Central States (Sardinia, Italia, Sicilia, Achaia, Creta)
+  //   // #4 Tie Breaker: Random Choice
+  // },
 
   botReturnLeftPiece: function () {
     //Most Left piece is return to the deck
@@ -232,6 +255,13 @@ const auxiliar = {
       );
       return connectedLocation ? connectedLocation.name : "Unknown";
     });
+  },
+
+  foundBorderBetweenStates: function (state1, state2) {
+    return model.borders.find(
+      (b) =>
+        b.connections.includes(state1.id) && b.connections.includes(state2.id)
+    );
   },
 
   getBorderByStateConnections: function (state, borderID) {

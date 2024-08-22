@@ -259,6 +259,9 @@ html {
 }
 
 .influenceToken {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   position: absolute;
   width: 32px;
   height: 32px;
