@@ -12,7 +12,6 @@ const controller = {
     this.startPlayers();
     this.addAllBonusToken();
     view.displayEnemyPieces();
-
     view.displayControlMarksCounter(1, 12);
     view.displayControlMarksCounter(2, 12);
 
@@ -23,6 +22,29 @@ const controller = {
   },
 
   //=====================Game State & Events=====================
+
+  startShowLocationsWithMouseMovement: function () {
+    function printMousePos(event) {
+      let x = event.clientX;
+      let y = event.clientY;
+      if (x < startX || x > endX || y < startY || y > endY) {
+        view.displayInfo("");
+        return;
+      }
+      const loc = { x: x - startX, y: y - startY };
+      const locationIndex = auxiliar.getLocationsIndexByLocation(loc);
+      if (locationIndex !== null) {
+        const text = controller.getLocationHoverMessage(locationIndex);
+        if (locationIndex >= 18) {
+          view.drawDirectionArrows(locations[locationIndex]);
+        }
+        view.displayInfo(text);
+      } else {
+        view.displayInfo("");
+      }
+    }
+    document.addEventListener("mousemove", printMousePos);
+  },
 
   startGameStateClick: function () {
     function checkMousePos(event) {
@@ -73,39 +95,6 @@ const controller = {
     document.addEventListener("click", checkMousePos);
   },
 
-  manageIfGameEnd: function (player) {
-    //Win Condition #1 Control Marks are 0
-    if (model.player1.controlMarks <= 0) {
-      view.displayMessage(`${model.player1.name} Wins!`);
-      this.addToGameLog(
-        `<span class=victory>${model.player1.name} Wins!</span>`
-      );
-      this.gameEnd = true;
-    } else if (model.player2.controlMarks <= 0) {
-      view.displayMessage(`${model.player2.name} Wins!`);
-      this.addToGameLog(
-        `<span class=victory>${model.player2.name} Wins!</span>`
-      );
-      this.gameEnd = true;
-    }
-    //Win Condition #2 Player can not play any piece
-    if (player) {
-      const nextPlayer = player === 1 ? 2 : 1;
-      if (!auxiliar.checkIfItIsPosibleToPlacePiece(player)) {
-        view.displayMessage(`${model["player" + nextPlayer].name} Wins!`);
-        this.addToGameLog(
-          `${
-            model["player" + player].name
-          } can't make any action, <span class=victory>${
-            model["player" + nextPlayer].name
-          } Wins!</span>`
-        );
-        this.gameEnd = true;
-      }
-    }
-    return;
-  },
-
   playBonusToken: function (player, index) {
     const dic = {
       1: "Extra Turn",
@@ -128,6 +117,8 @@ const controller = {
       case 1:
         //Extra turn
         this.playerTurn = 2;
+        model.grabAPiece(player, 1);
+        view.displayPlayerPieces(1);
         break;
       case 2:
         //Extra Piece
@@ -159,27 +150,37 @@ const controller = {
     }
   },
 
-  startShowLocationsWithMouseMovement: function () {
-    function printMousePos(event) {
-      let x = event.clientX;
-      let y = event.clientY;
-      if (x < startX || x > endX || y < startY || y > endY) {
-        view.displayInfo("");
-        return;
-      }
-      const loc = { x: x - startX, y: y - startY };
-      const locationIndex = auxiliar.getLocationsIndexByLocation(loc);
-      if (locationIndex !== null) {
-        const text = controller.getLocationHoverMessage(locationIndex);
-        if (locationIndex >= 18) {
-          view.drawDirectionArrows(locations[locationIndex]);
-        }
-        view.displayInfo(text);
-      } else {
-        view.displayInfo("");
+  manageIfGameEnd: function (player) {
+    //Win Condition #1 Control Marks are 0
+    if (model.player1.controlMarks <= 0) {
+      view.displayMessage(`${model.player1.name} Wins!`);
+      this.addToGameLog(
+        `<span class=victory>${model.player1.name} Wins!</span>`
+      );
+      this.gameEnd = true;
+    } else if (model.player2.controlMarks <= 0) {
+      view.displayMessage(`${model.player2.name} Wins!`);
+      this.addToGameLog(
+        `<span class=victory>${model.player2.name} Wins!</span>`
+      );
+      this.gameEnd = true;
+    }
+    //Win Condition #2 Player can not play any piece
+    if (player) {
+      const nextPlayer = player === 1 ? 2 : 1;
+      if (!auxiliar.checkIfItIsPosibleToPlacePiece(player)) {
+        view.displayMessage(`${model["player" + nextPlayer].name} Wins!`);
+        this.addToGameLog(
+          `${
+            model["player" + player].name
+          } can't make any action, <span class=victory>${
+            model["player" + nextPlayer].name
+          } Wins!</span>`
+        );
+        this.gameEnd = true;
       }
     }
-    document.addEventListener("mousemove", printMousePos);
+    return;
   },
 
   //=====================Auto Play=====================
@@ -220,7 +221,7 @@ const controller = {
       view.displayMessage("Border already taken");
       return;
     }
-    if (this.selectedPiece === null) {
+    if (pieceNumbers === null) {
       view.displayMessage("Select a piece");
       return;
     }

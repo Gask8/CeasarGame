@@ -6,8 +6,8 @@ let startX, startY, endX, endY;
 function init() {
   calculateBoardBoundaries();
   controller.startGame();
-  // printMousePoint();
   view.displayPlayerPieces(1);
+  // printMousePoint();
 }
 
 // Recalculate boundaries on window resize
@@ -19,13 +19,6 @@ function calculateBoardBoundaries() {
   startY = rect.top + window.scrollY;
   endX = startX + rect.width;
   endY = startY + rect.height;
-}
-
-function printMousePosition() {
-  function printMousePos(event) {
-    console.log("clientX: " + event.clientX + " - clientY: " + event.clientY);
-  }
-  document.addEventListener("click", printMousePos);
 }
 
 function printMousePoint() {
